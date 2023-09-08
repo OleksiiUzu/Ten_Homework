@@ -4,6 +4,7 @@ from sqlalchemy import desc, asc
 import database
 import datetime
 import models
+from celery_tasks import sender
 
 # ///////////////////////////////Main Page, About Page Methods/////////////////////////
 
@@ -35,16 +36,17 @@ def cart():  # db alchemy done
     """
     user_id = session['ID']
     order_status = 0
-    order = database.db_session.query(models.Orders).filter(models.Orders.User == user_id,
-                                                            models.Orders.Status == order_status).first()
+
     query = False
     try:
+        order = database.db_session.query(models.Orders).filter(models.Orders.User == user_id,
+                                                                models.Orders.Status == order_status).first()
         ordered_dishes = aliased(models.OrderedDishes)
         dishes_ = aliased(models.Dishes)
-
-        query = database.db_session.query(ordered_dishes, dishes_). \
-            join(dishes_, ordered_dishes.dish == dishes_.ID). \
-            filter(ordered_dishes.order_id == order.ID).all()
+        if order:
+            query = database.db_session.query(ordered_dishes, dishes_). \
+                join(dishes_, ordered_dishes.dish == dishes_.ID). \
+                filter(ordered_dishes.order_id == order.ID).all()
 
     except Exception as e:
         print("Помилка:", e)
@@ -71,6 +73,11 @@ def cart():  # db alchemy done
                            result=query)
 
 
+def send_conformation():
+    email = 'HelloDudue@dmail.com'
+    sender.delay(f'{email}')
+
+
 def cart_order():  # db alchemy done
     """
     :return: order_data for paying.
@@ -84,7 +91,9 @@ def cart_order():  # db alchemy done
             database.db_session.commit()
             database.db_session.refresh(ord_id)
         except Exception as e:
-            print("Помилка:", e)
+            print('Помилка: ', e)
+
+        send_conformation()
         return redirect('/cart')
     if request.method == 'GET':
         try:
@@ -97,10 +106,11 @@ def cart_order():  # db alchemy done
             dish_data = database.db_session.query(ordered_dishes, dishes_). \
                 join(dishes_, ordered_dishes.dish == dishes_.ID). \
                 filter(ordered_dishes.order_id == result.ID).all()
+
             return render_template('cart_order.html', result=result, dish_data=dish_data)
         except Exception as e:
-            print("Помилка:", e)
-        return render_template('cart_order.html')
+            print('Помилка :', e)
+        return render_template('cart.html')
 
 
 def cart_add():  # db alchemy done
