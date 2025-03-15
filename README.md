@@ -19,12 +19,16 @@ I have implemented celery and rabbitmq into the project.
 
 ## How to Run
 Clone the repository:
-  - git clone https://github.com/OleksiiUzu/flask-api-homework-8-docker.git
-  - cd flask-api-homework-8-docker
+  - git clone https://github.com/OleksiiUzu/flask-api-homework-10-celery-rabbitmq.git
+  - cd flask-api-homework-10-celery-rabbitmq
+
+
 2.(Optional) Create and activate a virtual environment:
   - python -m venv venv
   - source venv/bin/activate
+
 3.Build the Docker image:
   - docker build -t flask-app .
+
 4.Run the container:
   - docker run -p 5000:5000 flask-app
